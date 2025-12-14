@@ -1,0 +1,39 @@
+id: autoops-mini-flow
+namespace: production.autoops
+
+inputs:
+  - name: trigger_source
+    type: STRING
+    defaults: "manual-ui"
+
+tasks:
+  - id: ingest_metrics
+    type: io.kestra.plugin.scripts.node.Script
+    inputFiles:
+      main.js: |
+        const metrics = { errors: 42, latency_ms: 1800 };
+        console.log(JSON.stringify(metrics));
+    outputFiles:
+      - metrics.json
+
+  - id: analyze_metrics
+    type: io.kestra.plugin.openai.ChatCompletion
+    apiKey: "{{ secret('OPENAI_API_KEY') }}"
+    model: gpt-4o
+    messages:
+      - role: system
+        content: "Analyze these metrics."
+      - role: user
+        content: "{{ outputs.ingest_metrics.stdout }}"
+
+  - id: decide_action
+    type: io.kestra.plugin.scripts.node.Script
+    script: |
+      // Decision Logic
+      console.log('optimize_performance');
+
+  - id: execute_fix
+    type: io.kestra.plugin.scripts.shell.Commands
+    commands:
+      - echo "Executing fix..."
+      - echo "Optimizing DB queries..."
