@@ -88,13 +88,13 @@ export async function summarizeMetrics(metrics) {
 function generateFallbackSummary(metrics) {
     const issues = [];
 
-    if (metrics.errors > 30) issues.push(`high error rate (${metrics.errors})`);
-    if (metrics.latency_ms > 1000) issues.push(`elevated latency (${metrics.latency_ms}ms)`);
-    if (metrics.conversion_drop_percent > 10) issues.push(`${metrics.conversion_drop_percent}% conversion drop`);
+    if (metrics.cpu_load > 80) issues.push(`high CPU load (${metrics.cpu_load}%)`);
+    if (metrics.memory_usage > 90) issues.push(`critical memory usage (${metrics.memory_usage}%)`);
+    if (metrics.process_count > 500) issues.push(`abnormal process count (${metrics.process_count})`);
 
     if (issues.length === 0) {
-        return "System metrics are within normal parameters.";
+        return "System metrics are within healthy limits.";
     }
 
-    return `Critical issues detected: ${issues.join(', ')}. Immediate action required.`;
+    return `System Alert: ${issues.join(', ')} detected. Immediate attention recommended.`;
 }

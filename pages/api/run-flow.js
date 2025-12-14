@@ -27,10 +27,10 @@ export default async function handler(req, res) {
                 console.log('Using custom metrics from request');
             }
         } else {
-            // Use mock data
+            // Use real system metrics
             metrics = await getMetrics();
             if (config.system.debug) {
-                console.log('Using mock metrics');
+                console.log('Ingested real system metrics');
             }
         }
 
@@ -69,19 +69,19 @@ export default async function handler(req, res) {
     }
 }
 
-// Validate and sanitize custom metrics
+// Validate and sanitize metrics (custom or real)
 function validateMetrics(customMetrics) {
     const validated = {
-        errors: parseInt(customMetrics.errors) || 0,
-        latency_ms: parseInt(customMetrics.latency_ms) || 0,
-        conversion_drop_percent: parseFloat(customMetrics.conversion_drop_percent) || 0,
-        active_users: parseInt(customMetrics.active_users) || 0,
+        cpu_load: parseFloat(customMetrics.cpu_load) || 0,
+        memory_usage: parseFloat(customMetrics.memory_usage) || 0,
+        process_count: parseInt(customMetrics.process_count) || 0,
+        uptime_seconds: parseInt(customMetrics.uptime_seconds) || 0,
         timestamp: customMetrics.timestamp || new Date().toISOString()
     };
 
-    // Add any additional custom fields
+    // Keep original keys if present (for backward compatibility or custom simulations)
     Object.keys(customMetrics).forEach(key => {
-        if (!validated[key]) {
+        if (validated[key] === undefined) {
             validated[key] = customMetrics[key];
         }
     });

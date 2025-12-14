@@ -1,6 +1,6 @@
 import { useState, useEffect, memo } from 'react';
 import Head from 'next/head';
-import { Activity, Brain, GitBranch, Terminal, CheckCircle, Loader2, Play, Cpu, Database, Zap } from 'lucide-react';
+import { Activity, Brain, GitBranch, Terminal, CheckCircle, Loader2, Play, Cpu, Database, Zap, Bot } from 'lucide-react';
 
 const LogItem = memo(({ log }) => {
     const getAgentIcon = (agent) => {
@@ -68,7 +68,7 @@ export default function Log() {
             setTimeout(() => {
                 addLog('Metrics Agent', 'Ingesting system telemetry...', 0);
                 setProgress(25);
-                addLog('Metrics Agent', `Found: Errors=${result.metrics.errors}, Latency=${result.metrics.latency_ms}ms`, 800);
+                addLog('Metrics Agent', `Telemetry: CPU=${result.metrics.cpu_load}%, RAM=${result.metrics.memory_usage}%, Procs=${result.metrics.process_count}`, 800);
                 setProgress(35);
             }, 1000);
 
@@ -108,10 +108,7 @@ export default function Log() {
         }, delay);
     };
 
-    // Auto-run on mount
-    useEffect(() => {
-        runAutoOps();
-    }, []);
+    // Auto-run removed for manual start
 
     const generatePDF = async () => {
         const { jsPDF } = await import('jspdf');
@@ -241,7 +238,27 @@ export default function Log() {
 
                     {/* Terminal Content */}
                     <div className="p-6 md:p-8 space-y-4 min-h-[600px] max-h-[70vh] overflow-y-auto font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                        {logs.map((log, i) => (
+
+                        {/* Start View */}
+                        {status === 'idle' && (
+                            <div className="flex flex-col items-center justify-center h-full min-h-[400px] animate-fade-in text-center">
+                                <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                                    <Bot className="w-10 h-10 text-purple-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2">Ready to Monitor</h3>
+                                <p className="text-gray-400 max-w-md mb-8">System is connected. Click below to start the autonomous monitoring agent cycle.</p>
+                                <button
+                                    onClick={runAutoOps}
+                                    className="px-8 py-4 bg-white text-black font-bold rounded-xl hover:scale-105 transition-all shadow-xl shadow-white/10 flex items-center gap-3"
+                                >
+                                    <Play className="w-5 h-5 fill-current" />
+                                    Initialize Agents
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Logs View */}
+                        {status !== 'idle' && logs.map((log, i) => (
                             <LogItem key={i} log={log} />
                         ))}
 
@@ -280,9 +297,9 @@ export default function Log() {
                 {/* Stats Footer */}
                 {data && status === 'completed' && (
                     <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <StatCard label="Errors Detected" value={data.metrics.errors} color="text-red-400" />
-                        <StatCard label="Latency (ms)" value={data.metrics.latency_ms} color="text-yellow-400" />
-                        <StatCard label="Execution Time" value={data.executionTime} color="text-purple-400" />
+                        <StatCard label="CPU Load" value={`${data.metrics.cpu_load}%`} color="text-red-400" />
+                        <StatCard label="Memory Usage" value={`${data.metrics.memory_usage}%`} color="text-yellow-400" />
+                        <StatCard label="Processes" value={data.metrics.process_count} color="text-purple-400" />
                         <StatCard label="Fix Applied" value="✓" color="text-green-400" />
                     </div>
                 )}

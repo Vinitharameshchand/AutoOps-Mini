@@ -93,34 +93,41 @@ export async function decideAction(summary, metrics) {
 
 // Intelligent fallback decision based on metrics
 function generateFallbackDecision(summary, metrics) {
-    // High errors suggest code issues
-    if (metrics.errors > 50) {
+    // High CPU usage suggests optimization needed
+    if (metrics.cpu_load > 80) {
         return {
-            decision: "rollback",
-            reason: `Critical error rate (${metrics.errors}) detected. Rolling back to last stable version.`
+            decision: "scale_resources",
+            reason: `Critical CPU load (${metrics.cpu_load}%) detected. Scaling up resources.`
         };
     }
 
-    // High latency suggests performance issues
-    if (metrics.latency_ms > 2000) {
+    // High Memory usage suggests potential leaks or need for restart
+    if (metrics.memory_usage > 90) {
+        return {
+            decision: "restart_service",
+            reason: `Critical memory usage (${metrics.memory_usage}%) detected. Restarting service to clear memory.`
+        };
+    }
+
+    // High process count might indicate runaway processes
+    if (metrics.process_count > 500) {
         return {
             decision: "optimize_performance",
-            reason: `Severe latency spike (${metrics.latency_ms}ms) detected. Optimizing performance.`
+            reason: `High process count (${metrics.process_count}). Optimizing process management.`
         };
     }
 
-    // Moderate issues suggest code fix
-    if (metrics.errors > 20 || metrics.latency_ms > 1000) {
+    // Default to optimization if load is moderate
+    if (metrics.cpu_load > 50 || metrics.memory_usage > 60) {
         return {
-            decision: "fix_code",
-            reason: `Moderate issues detected (errors: ${metrics.errors}, latency: ${metrics.latency_ms}ms). Applying targeted fix.`
+            decision: "optimize_performance",
+            reason: "Moderate system load detected. Applying proactive optimizations."
         };
     }
 
-    // Default to optimization
     return {
-        decision: "optimize_performance",
-        reason: "Proactive optimization based on current metrics."
+        decision: "monitor",
+        reason: "System metrics within normal parameters. Continuing monitoring."
     };
 }
 
