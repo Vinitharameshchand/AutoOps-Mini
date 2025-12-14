@@ -113,6 +113,73 @@ export default function Log() {
         runAutoOps();
     }, []);
 
+    const generatePDF = async () => {
+        const { jsPDF } = await import('jspdf');
+        const autoTable = (await import('jspdf-autotable')).default;
+
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(22);
+        doc.setTextColor(40, 40, 40);
+        doc.text('AutoOps Mini - Execution Report', 20, 20);
+
+        // Metadata
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 30);
+        doc.text(`Execution Time: ${data.executionTime}`, 20, 35);
+
+        // Horizontal Line
+        doc.setDrawColor(200, 200, 200);
+        doc.line(20, 40, 190, 40);
+
+        // Section 1: Metrics
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('1. System Telemetry', 20, 50);
+
+        const metricsData = Object.entries(data.metrics).map(([key, value]) => [key, value]);
+        autoTable(doc, {
+            startY: 55,
+            head: [['Metric', 'Value']],
+            body: metricsData,
+            theme: 'grid',
+            headStyles: { fillColor: [66, 133, 244] }
+        });
+
+        // Section 2: AI Analysis
+        let finalY = doc.lastAutoTable.finalY + 15;
+        doc.setFontSize(14);
+        doc.text('2. AI Root Cause Analysis', 20, finalY);
+
+        doc.setFontSize(11);
+        doc.setTextColor(60, 60, 60);
+        const splitSummary = doc.splitTextToSize(data.summary, 170);
+        doc.text(splitSummary, 20, finalY + 7);
+
+        // Section 3: Decision & Action
+        finalY = finalY + 15 + (splitSummary.length * 5);
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('3. Autonomous Decision & Action', 20, finalY);
+
+        autoTable(doc, {
+            startY: finalY + 5,
+            head: [['Component', 'Output']],
+            body: [
+                ['Decision Agent', `DECISION: ${data.decision.decision.toUpperCase()}\nReason: ${data.decision.reason}`],
+                ['Execution Agent', data.actionResult.action_log]
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: [15, 157, 88] },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }
+        });
+
+        // Save
+        doc.save(`autoops-report-${Date.now()}.pdf`);
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-purple-950 text-gray-200 p-4 md:p-12" style={{ fontFamily: 'Inter, sans-serif' }}>
             <Head>
@@ -190,12 +257,21 @@ export default function Log() {
                                 <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4 drop-shadow-lg" />
                                 <h3 className="text-2xl font-bold text-green-400 mb-2">Issue Resolved</h3>
                                 <p className="text-gray-400 text-sm mb-6">Autonomous execution complete. System monitoring resumed.</p>
-                                <button
-                                    onClick={() => window.location.reload()}
-                                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl text-sm font-bold transition-all duration-300 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-105"
-                                >
-                                    Run Again
-                                </button>
+                                <div className="flex justify-center gap-4">
+                                    <button
+                                        onClick={() => window.location.reload()}
+                                        className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-semibold transition-all text-white border border-white/10"
+                                    >
+                                        Run Again
+                                    </button>
+                                    <button
+                                        onClick={generatePDF}
+                                        className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl text-sm font-bold transition-all duration-300 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-105 flex items-center gap-2"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                        Download Report
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
