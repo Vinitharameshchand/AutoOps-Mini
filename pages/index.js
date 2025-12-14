@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { ArrowRight, Bot, Zap, Activity, Sparkles, Code2, GitBranch, LogOut, User } from 'lucide-react';
+import { ArrowRight, Bot, Zap, Activity, Sparkles, Code2, GitBranch, LogOut, User, Brain, Terminal } from 'lucide-react';
 
 export default function Home() {
     const router = useRouter();
@@ -120,12 +120,59 @@ export default function Home() {
                 </div>
 
                 {/* Tech Stack Pills */}
-                <div className="flex flex-wrap items-center justify-center gap-3 mt-16 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                <div className="flex flex-wrap items-center justify-center gap-3 mt-16">
                     {['Cline', 'Kestra', 'Vercel', 'Together AI', 'OpenAI'].map((tech, i) => (
-                        <span key={i} className="px-4 py-2 text-xs font-semibold text-gray-300 bg-white/5 border border-white/10 rounded-full backdrop-blur-sm hover:bg-white/10 transition-colors">
+                        <span
+                            key={i}
+                            className="px-4 py-2 text-xs font-semibold text-gray-300 bg-white/5 border border-white/10 rounded-full backdrop-blur-sm hover:bg-white/10 transition-colors animate-fade-in-down opacity-0"
+                            style={{ animationDelay: `${0.6 + (i * 0.1)}s`, animationFillMode: 'forwards' }}
+                        >
                             {tech}
                         </span>
                     ))}
+                </div>
+                {/* Floating Tech Stack - Top Left (Cline) */}
+                <div className="absolute top-8 left-8 hidden md:flex items-center gap-3 animate-fade-in-down" style={{ animationDelay: '0.8s' }}>
+                    <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-xl">
+                        <Terminal className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-xs text-gray-500 font-mono">BUILT WITH</div>
+                        <div className="text-sm font-bold text-white tracking-wider">CLINE</div>
+                    </div>
+                </div>
+
+                {/* Floating Tech Stack - Top Right (Kestra) - Positioned below Auth */}
+                <div className="absolute top-24 right-8 hidden md:flex items-center gap-3 animate-fade-in-down flex-row-reverse text-right" style={{ animationDelay: '1.0s' }}>
+                    <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-xl">
+                        <Activity className="w-6 h-6 text-blue-400" />
+                    </div>
+                    <div>
+                        <div className="text-xs text-gray-500 font-mono">ORCHESTRATED BY</div>
+                        <div className="text-sm font-bold text-white tracking-wider">KESTRA</div>
+                    </div>
+                </div>
+
+                {/* Floating Tech Stack - Bottom Left (Vercel) */}
+                <div className="absolute bottom-8 left-8 hidden md:flex items-center gap-3 animate-fade-in-up" style={{ animationDelay: '1.2s' }}>
+                    <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-xl">
+                        <Zap className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-xs text-gray-500 font-mono">DEPLOYED ON</div>
+                        <div className="text-sm font-bold text-white tracking-wider">VERCEL</div>
+                    </div>
+                </div>
+
+                {/* Floating Tech Stack - Bottom Right (AI) */}
+                <div className="absolute bottom-8 right-8 hidden md:flex items-center gap-3 animate-fade-in-up flex-row-reverse text-right" style={{ animationDelay: '1.4s' }}>
+                    <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-xl">
+                        <Brain className="w-6 h-6 text-pink-400" />
+                    </div>
+                    <div>
+                        <div className="text-xs text-gray-500 font-mono">POWERED BY</div>
+                        <div className="text-sm font-bold text-white tracking-wider">GPT-4o & LLAMA-3</div>
+                    </div>
                 </div>
             </main>
 
