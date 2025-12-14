@@ -92,6 +92,11 @@ function generateFallbackSummary(metrics) {
     if (metrics.memory_usage > 90) issues.push(`critical memory usage (${metrics.memory_usage}%)`);
     if (metrics.process_count > 500) issues.push(`abnormal process count (${metrics.process_count})`);
 
+    // Cloud/Web specific metrics
+    if (metrics.latency_ms > 1000) issues.push(`high latency (${metrics.latency_ms}ms)`);
+    if (metrics.errors > 5) issues.push(`elevated error rate (${metrics.errors} errors)`);
+    if (metrics.conversion_drop_percent > 5) issues.push(`conversion drop (-${metrics.conversion_drop_percent}%)`);
+
     if (issues.length === 0) {
         return "System metrics are within healthy limits.";
     }

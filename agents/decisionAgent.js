@@ -109,6 +109,14 @@ function generateFallbackDecision(summary, metrics) {
         };
     }
 
+    // High latency suggests database or code inefficiency
+    if (metrics.latency_ms > 1000) {
+        return {
+            decision: "optimize_performance",
+            reason: `Critical latency detected (${metrics.latency_ms}ms). Optimizing database queries and caching.`
+        };
+    }
+
     // High process count might indicate runaway processes
     if (metrics.process_count > 500) {
         return {

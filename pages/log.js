@@ -1,6 +1,6 @@
 import { useState, useEffect, memo } from 'react';
 import Head from 'next/head';
-import { Activity, Brain, GitBranch, Terminal, CheckCircle, Loader2, Play, Cpu, Database, Zap, Bot } from 'lucide-react';
+import { Activity, Brain, GitBranch, Terminal, CheckCircle, Loader2, Play, Cpu, Database, Zap, Bot, Code2 } from 'lucide-react';
 
 const LogItem = memo(({ log }) => {
     const getAgentIcon = (agent) => {
@@ -45,16 +45,26 @@ export default function Log() {
     const [data, setData] = useState(null);
     const [progress, setProgress] = useState(0);
 
-    const runAutoOps = async () => {
-        setStatus('running');
-        setLogs([]);
-        setProgress(0);
+    const [isMonitoring, setIsMonitoring] = useState(false);
+    const [cycleCount, setCycleCount] = useState(0);
 
-        // Simulate initial connection
-        addLog('System', 'Initializing AutoOps Agent...', 0);
+    const toggleMonitoring = () => {
+        if (isMonitoring) {
+            setIsMonitoring(false);
+            setStatus('idle');
+            setCycleCount(0);
+        } else {
+            setIsMonitoring(true);
+            setStatus('running');
+            setLogs([]); // Clear logs on new run
+            runMonitoringLoop();
+        }
+    };
 
+    const runMonitoringLoop = async () => {
+        // Core loop function
         try {
-            addLog('System', 'Connecting to 4 active agents...', 500);
+            addLog('System', `Initiating Monitoring Cycle...`, 0);
             setProgress(10);
 
             const res = await fetch('/api/run-flow', { method: 'POST' });
@@ -63,44 +73,51 @@ export default function Log() {
             if (!res.ok) throw new Error(result.error);
 
             setData(result);
+            setProgress(50);
 
-            // Sequence the UI updates to feel like real-time processing
-            setTimeout(() => {
-                addLog('Metrics Agent', 'Ingesting system telemetry...', 0);
-                setProgress(25);
-                addLog('Metrics Agent', `Telemetry: CPU=${result.metrics.cpu_load}%, RAM=${result.metrics.memory_usage}%, Procs=${result.metrics.process_count}`, 800);
-                setProgress(35);
-            }, 1000);
+            // Log Key Events only to avoid spam
+            addLog('Metrics Agent', `Telemetry: CPU=${result.metrics.cpu_load}%, RAM=${result.metrics.memory_usage}%, Procs=${result.metrics.process_count}`, 500);
 
-            setTimeout(() => {
-                addLog('Summary Agent', 'Analyzing root cause with LLM...', 0);
-                setProgress(50);
-                addLog('Summary Agent', result.summary, 1500);
-                setProgress(65);
-            }, 3000);
-
-            setTimeout(() => {
-                addLog('Decision Agent', 'Evaluating best course of action...', 0);
-                setProgress(75);
-                addLog('Decision Agent', `DECISION: ${result.decision.decision.toUpperCase()}`, 1000);
-                addLog('Decision Agent', `Reasoning: ${result.decision.reason}`, 1200);
-                setProgress(85);
-            }, 6000);
-
-            setTimeout(() => {
-                addLog('Execution Agent', 'Initiating automated fix...', 0);
-                setProgress(95);
+            if (result.decision.decision !== 'monitor') {
+                addLog('Decision Agent', `ACTION REQUIRED: ${result.decision.decision}`, 1000);
                 addLog('Execution Agent', result.actionResult.action_log, 1500);
-                setProgress(100);
-                setStatus('completed');
-            }, 9000);
+
+                // Stop monitoring on fix to show report
+                setTimeout(() => {
+                    setStatus('completed');
+                    setIsMonitoring(false);
+                }, 2000);
+            } else {
+                addLog('Decision Agent', 'System Healthy. No action required.', 1000);
+            }
+
+            setProgress(100);
+
+            // Schedule next run if still monitoring and no fix was applied
+            if (result.decision.decision === 'monitor') {
+                setTimeout(() => {
+                    setCycleCount(c => c + 1);
+                }, 5000);
+            }
 
         } catch (err) {
             console.error(err);
-            addLog('System', `CRITICAL ERROR: ${err.message}`, 0);
+            addLog('System', `monitor error: ${err.message}`, 0);
+            setIsMonitoring(false); // Stop on error
             setStatus('error');
         }
     };
+
+    // Effect for continuous loop
+    useEffect(() => {
+        let timeoutId;
+        if (isMonitoring && status !== 'error' && status !== 'completed') {
+            timeoutId = setTimeout(() => {
+                runMonitoringLoop();
+            }, 5000); // Interval
+        }
+        return () => clearTimeout(timeoutId);
+    }, [isMonitoring, cycleCount]);
 
     const addLog = (agent, message, delay) => {
         setTimeout(() => {
@@ -194,6 +211,14 @@ export default function Log() {
                         </div>
 
                         <div className="flex items-center gap-4">
+                            {isMonitoring && (
+                                <button
+                                    onClick={toggleMonitoring}
+                                    className="text-xs px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 transition-all animate-pulse"
+                                >
+                                    Stop Monitoring
+                                </button>
+                            )}
                             <button
                                 onClick={async () => {
                                     await fetch('/api/clear-cache', { method: 'POST' });
@@ -240,7 +265,7 @@ export default function Log() {
                     <div className="p-6 md:p-8 space-y-4 min-h-[600px] max-h-[70vh] overflow-y-auto font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
 
                         {/* Start View */}
-                        {status === 'idle' && (
+                        {!isMonitoring && logs.length === 0 && (
                             <div className="flex flex-col items-center justify-center h-full min-h-[400px] animate-fade-in text-center">
                                 <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
                                     <Bot className="w-10 h-10 text-purple-400" />
@@ -248,17 +273,17 @@ export default function Log() {
                                 <h3 className="text-xl font-bold text-white mb-2">Ready to Monitor</h3>
                                 <p className="text-gray-400 max-w-md mb-8">System is connected. Click below to start the autonomous monitoring agent cycle.</p>
                                 <button
-                                    onClick={runAutoOps}
+                                    onClick={toggleMonitoring}
                                     className="px-8 py-4 bg-white text-black font-bold rounded-xl hover:scale-105 transition-all shadow-xl shadow-white/10 flex items-center gap-3"
                                 >
                                     <Play className="w-5 h-5 fill-current" />
-                                    Initialize Agents
+                                    Start Live Monitoring
                                 </button>
                             </div>
                         )}
 
                         {/* Logs View */}
-                        {status !== 'idle' && logs.map((log, i) => (
+                        {logs.length > 0 && logs.map((log, i) => (
                             <LogItem key={i} log={log} />
                         ))}
 
@@ -274,12 +299,12 @@ export default function Log() {
                                 <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4 drop-shadow-lg" />
                                 <h3 className="text-2xl font-bold text-green-400 mb-2">Issue Resolved</h3>
                                 <p className="text-gray-400 text-sm mb-6">Autonomous execution complete. System monitoring resumed.</p>
-                                <div className="flex justify-center gap-4">
+                                <div className="flex justify-center gap-4 flex-wrap">
                                     <button
-                                        onClick={() => window.location.reload()}
+                                        onClick={() => toggleMonitoring()}
                                         className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-semibold transition-all text-white border border-white/10"
                                     >
-                                        Run Again
+                                        Resume Monitoring
                                     </button>
                                     <button
                                         onClick={generatePDF}
@@ -288,7 +313,26 @@ export default function Log() {
                                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                                         Download Report
                                     </button>
+                                    <button
+                                        onClick={() => {
+                                            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                                            const url = URL.createObjectURL(blob);
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            a.download = `autoops-result-${Date.now()}.json`;
+                                            a.click();
+                                        }}
+                                        className="px-6 py-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-xl text-sm font-bold transition-all text-blue-400 flex items-center gap-2"
+                                    >
+                                        <Code2 className="w-4 h-4" />
+                                        Raw JSON
+                                    </button>
                                 </div>
+                                {data && (
+                                    <div className="mt-6 text-left p-4 bg-black/50 rounded-lg border border-white/10 overflow-auto max-h-60 text-xs font-mono">
+                                        <pre className="text-gray-400">{JSON.stringify(data, null, 2)}</pre>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

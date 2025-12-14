@@ -32,7 +32,7 @@ export const config = {
         decision: {
             timeout: 10000,
             fallbackEnabled: true,
-            validActions: ['fix_code', 'rollback', 'optimize_performance', 'scale_up'],
+            validActions: ['fix_code', 'rollback', 'optimize_performance', 'scale_up', 'scale_resources', 'restart_service', 'monitor'],
         },
         execution: {
             timeout: 5000,

@@ -19,8 +19,12 @@ export async function executeAction(decisionObj) {
             log += await applyCodeFix(decision, reason);
         } else if (decision === 'rollback') {
             log += await performRollback();
-        } else if (decision === 'scale_up') {
+        } else if (decision === 'scale_up' || decision === 'scale_resources') {
             log += await scaleInfrastructure();
+        } else if (decision === 'restart_service') {
+            log += await restartService();
+        } else if (decision === 'monitor') {
+            log += "\nSystem healthy. Continued monitoring.";
         } else {
             log += `\nUnknown action: ${decision}. No operation performed.`;
         }
@@ -67,6 +71,14 @@ async function applyCodeFix(decision, reason) {
 
         fs.appendFileSync(targetFile, logEntry, 'utf8');
 
+        // UPDATE DEMO STATE: Mark system as "Healthy"
+        const healthFile = path.join(process.cwd(), 'public', 'system-health.json');
+        fs.writeFileSync(healthFile, JSON.stringify({
+            status: 'healthy',
+            last_fix_timestamp: new Date().toISOString(),
+            fix_type: decision
+        }, null, 2));
+
         return `\nSuccessfully modified ${targetFile} to record the fix.`;
     } catch (err) {
         throw new Error(`File modification failed: ${err.message}`);
@@ -83,5 +95,11 @@ async function scaleInfrastructure() {
     // Simulate scaling
     await new Promise(resolve => setTimeout(resolve, 500));
     return `\nScaling infrastructure... (Simulated)\nAdded 2 additional instances to handle load.`;
+}
+
+async function restartService() {
+    // Simulate restart
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return `\nRestarting service... (Simulated)\nService uptime reset. Memory cleared.`;
 }
 
